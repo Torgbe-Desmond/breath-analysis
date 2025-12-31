@@ -14,7 +14,7 @@ class CategoryService {
   constructor() {}
 
   // Seed multiple categories (skip duplicates)
-  async seedCategories(data) {
+  async seed(data) {
     try {
       const result = await Category.insertMany(data, { ordered: false });
       return new ResponseModel(result, "Categories seeded successfully", 201);

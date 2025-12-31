@@ -167,6 +167,30 @@ class ResponseService {
       return new ResponseModel(null, error.message, 500);
     }
   }
+
+  async byEmail(email) {
+    // Find the response by email
+    const response = await Response.findOne({ email });
+
+    if (!response) {
+      return res.status(404).json({ message: "Response not found" });
+    }
+
+    const formattedResponse = {
+      _id: response._id,
+      email: response.email,
+      answers: response.answers.map((a) => ({
+        questionId: a.questionId,
+        value: a.value,
+      })),
+      submittedAt: response.createdAt,
+    };
+    return new ResponseModel(
+      formattedResponse,
+      "Response retrieved successfully",
+      200
+    );
+  }
 }
 
 module.exports = ResponseService;

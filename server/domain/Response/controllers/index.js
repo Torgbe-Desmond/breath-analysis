@@ -48,7 +48,12 @@ router.post("/search", async (req, res) => {
 router.get("/search/:id", async (req, res) => {
   const { id } = req.params;
   const results = await responseService.getById(id);
-  console.log("results", results);
+  res.status(results.status).json(results);
+});
+
+router.post("/email", async (req, res) => {
+  const { email } = req.body;
+  const results = await responseService.byEmail(email);
   res.status(results.status).json(results);
 });
 
