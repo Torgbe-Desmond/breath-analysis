@@ -1,13 +1,16 @@
-const { StatusCodes } = require('http-status-codes')
+const { StatusCodes } = require("http-status-codes");
 
-const errorMiddleware = (err,req,res,next)=>{
-        createCustomError = {
-            message : err.message || 'INTERNAL SERVER ERROR',
-            statusCode : err.statusCodes || StatusCodes.INTERNAL_SERVER_ERROR
-        }
-        res.status(createCustomError.statusCode).json({message:err.message})
-
-}
-
+const errorMiddleware = (err, req, res, next) => {
+  createCustomError = {
+    message: err.message || "INTERNAL SERVER ERROR",
+    status: err.status || StatusCodes.INTERNAL_SERVER_ERROR,
+  };
+  res
+    .status(createCustomError.status)
+    .json({
+      message: createCustomError.message,
+      status: createCustomError.status,
+    });
+};
 
 module.exports = errorMiddleware;

@@ -1,60 +1,121 @@
 const express = require("express");
-const ResponseService = require("../service");
+const ResponseService = require("../service/service");
 const router = express.Router();
 const responseService = new ResponseService();
+const mongoose = require("mongoose");
 
 // CREATE response
-router.post("/", async (req, res) => {
-  const { answers, email } = req.body;
-  const results = await responseService.create(answers, email);
-  res.status(results.status).json(results);
-});
+const createResponse = async (req, res, nest) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { answers, email } = req.body;
+    const results = await responseService.create(answers, email, { session });
+    await session.commitTransaction();
+    res.status(201).json([]);
+  } catch (error) {
+    next(error);
+  } finally {
+    session.endSession();
+  }
+};
 
 // READ all responses
-router.get("/", async (req, res) => {
-  const results = await responseService.getAll();
-  res.status(results.status).json(results);
-});
+const getAllResponse = async (req, res, next) => {
+  try {
+    const results = await responseService.getAll();
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
 
 // READ single response by ID
-router.get("/:id", async (req, res) => {
-  const results = await responseService.getById(req.params.id);
-  res.status(results.status).json(results);
-});
+const getResponse = async (req, res, next) => {
+  try {
+    const results = await responseService.getById(req.params.id);
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
 
 // UPDATE response
-router.put("/:id", async (req, res) => {
-  const { answers } = req.body;
-  const results = await responseService.update(req.params.id, answers);
-  res.status(results.status).json(results);
-});
+const updateResponse = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { answers } = req.body;
+    const results = await responseService.update(req.params.id, answers, {
+      session,
+    });
+
+    await session.commitTransaction();
+    res.status(results.status).json(results);
+  } catch (error) {
+    await session.abortTransaction();
+    next(error);
+  } finally {
+    session.endSession();
+  }
+};
 
 // DELETE response
-router.delete("/:id", async (req, res) => {
-  const results = await responseService.delete(req.params.id);
-  res.status(results.status).json(results);
-});
+const deleteResponse = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const results = await responseService.delete(req.params.id, { session });
+    await session.commitTransaction();
+    res.status(results.status).json(results);
+  } catch (error) {
+    session.abortTransaction();
+    next(error);
+  } finally {
+    session.endSession();
+  }
+};
 
-// SEARCH responses by value with pagination
-router.post("/search", async (req, res) => {
-  const { value } = req.body;
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-  const results = await responseService.byValue(value, page, limit, skip);
-  res.status(results.status).json(results);
-});
+const searchResponsesByValue = async (req, res, next) => {
+  try {
+    const { value } = req.body;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
 
-router.get("/search/:id", async (req, res) => {
-  const { id } = req.params;
-  const results = await responseService.getById(id);
-  res.status(results.status).json(results);
-});
+    const results = await responseService.byValue(value, page, limit, skip);
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
 
-router.post("/email", async (req, res) => {
-  const { email } = req.body;
-  const results = await responseService.byEmail(email);
-  res.status(results.status).json(results);
-});
+const getResponseById = async (req, res, next) => {
+  try {
+    const results = await responseService.getById(req.params.id);
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
 
-module.exports = router;
+const getResponseByEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const results = await responseService.byEmail(email);
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  createResponse,
+  getAllResponse,
+  getResponse,
+  updateResponse,
+  deleteResponse,
+  searchResponsesByValue,
+  getResponseById,
+  getResponseByEmail,
+};

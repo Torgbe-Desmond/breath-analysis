@@ -17,23 +17,7 @@ router.get("", async (req, res) => {
 });
 
 router.post("/submit-assessment", async (req, res) => {
-  try {
-    const { answers } = req.body;
-    console.log("answrs", answers);
-
-    if (!answers || !Array.isArray(answers)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid payload" });
-    }
-
-    await Response.create({ answers });
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false });
-  }
+ 
 });
 
 router.get("/:id", async (req, res) => {

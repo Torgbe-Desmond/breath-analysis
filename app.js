@@ -23,9 +23,11 @@ app.use(
 );
 
 // Routes
-app.use("/categories", require("./server/domain/Categories/controllers/index"));
-app.use("/questions", require("./server/domain/Questions/controllers/index"));
-app.use("/responses", require("./server/domain/Response/controllers/index"));
+app.use("/categories", require("./server/domain/Categories/routes/index"));
+app.use("/questions", require("./server/domain/Questions/routes/index"));
+app.use("/responses", require("./server/domain/Response/routes/index"));
+app.use("/feedbacks", require("./server/domain/Feedback/routes/index"));
+
 
 app.use(require("./server/middleware/errorMiddleware"));
 app.use(require("./server/middleware/notFound"));

@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 const Category = require("../model/Category");
 const Question = require("../../Questions/model/Question");
+const Insight = require("../../Insights/model/Insights");
+const BadRequest = require("../../../Errors/BadRequest");
+const NotFound = require("../../../Errors/Notfound");
 
 class ResponseModel {
   constructor(data, message, status) {
@@ -11,112 +14,129 @@ class ResponseModel {
 }
 
 class CategoryService {
-  constructor() {}
-
-  // Seed multiple categories (skip duplicates)
-  async seed(data) {
-    try {
-      const result = await Category.insertMany(data, { ordered: false });
-      return new ResponseModel(result, "Categories seeded successfully", 201);
-    } catch (error) {
-      if (error.code === 11000) {
-        return new ResponseModel(null, "Some categories already exist", 409);
-      }
-      return new ResponseModel(null, "Server error", 500);
+  /* ================= SEED ================= */
+  async seed(data, { session }) {
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new BadRequest("Invalid seed payload");
     }
-  }
 
-  // Create a single category
-  async create(data) {
     try {
-      const category = await Category.create(data);
-      return new ResponseModel(category, "Category created successfully", 201);
-    } catch (err) {
-      return new ResponseModel(null, err.message, 400);
-    }
-  }
-
-  // Get all categories
-  async getAll() {
-    try {
-      const categories = await Category.find();
-      return new ResponseModel(
-        categories,
-        "Categories fetched successfully",
-        200
-      );
-    } catch (err) {
-      return new ResponseModel(null, err.message, 500);
-    }
-  }
-
-  // Get single category by ID (populate questions)
-  async getById(id) {
-    try {
-      const category = await Category.findById(id).populate("questionIds");
-      if (!category) {
-        return new ResponseModel(null, "Category not found", 404);
-      }
-      return new ResponseModel(category, "Category fetched successfully", 200);
-    } catch (err) {
-      return new ResponseModel(null, err.message, 500);
-    }
-  }
-
-  // Update category by ID
-  async update(id, body) {
-    try {
-      const category = await Category.findByIdAndUpdate(id, body, {
-        new: true,
-        runValidators: true,
+      const result = await Category.insertMany(data, {
+        ordered: false,
+        session,
       });
 
-      if (!category) {
-        return new ResponseModel(null, "Category not found", 404);
-      }
-
-      return new ResponseModel(category, "Category updated successfully", 200);
+      return new ResponseModel(result, "Categories seeded successfully", 201);
     } catch (err) {
-      return new ResponseModel(null, err.message, 400);
+      // Duplicate key error
+      if (err.code === 11000) {
+        throw new BadRequest("Some categories already exist");
+      }
+      throw err;
     }
   }
 
-  // Delete category + associated questions using transaction
-  async delete(id) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  /* ================= CATEGORY INSIGHTS ================= */
+  async getCategoryInsights(categoryId) {
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      throw new BadRequest("Invalid category ID");
+    }
 
-    try {
-      const category = await Category.findById(id).session(session);
-      if (!category) {
-        await session.abortTransaction();
-        session.endSession();
-        return new ResponseModel(null, "Category not found", 404);
-      }
+    const insight = await Insight.findOne({ categoryId }).lean();
 
-      // Delete all questions in this category
-      if (category.questionIds && category.questionIds.length > 0) {
-        await Question.deleteMany({
-          _id: { $in: category.questionIds },
-        }).session(session);
-      }
-
-      // Delete the category itself
-      await Category.findByIdAndDelete(id).session(session);
-
-      await session.commitTransaction();
-      session.endSession();
-
+    if (!insight) {
       return new ResponseModel(
         null,
-        "Category and associated questions deleted successfully",
-        200
+        "Insights are being computed. Please try again shortly.",
+        202
       );
-    } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-      return new ResponseModel(null, err.message, 500);
     }
+
+    return new ResponseModel(insight, "Insights fetched from cache", 200);
+  }
+
+  /* ================= CREATE ================= */
+  async create(data, { session }) {
+    if (!data) {
+      throw new BadRequest("Invalid category payload");
+    }
+
+    const category = await Category.create([data], { session });
+
+    return new ResponseModel(category[0], "Category created successfully", 201);
+  }
+
+  /* ================= GET ALL ================= */
+  async getAll() {
+    const categories = await Category.find();
+
+    return new ResponseModel(
+      categories,
+      "Categories fetched successfully",
+      200
+    );
+  }
+
+  /* ================= GET BY ID ================= */
+  async getById(id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequest("Invalid category ID");
+    }
+
+    const category = await Category.findById(id).populate("questionIds");
+
+    if (!category) {
+      throw new NotFound("Category not found");
+    }
+
+    return new ResponseModel(category, "Category fetched successfully", 200);
+  }
+
+  /* ================= UPDATE ================= */
+  async update(id, body, { session }) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequest("Invalid category ID");
+    }
+
+    const category = await Category.findByIdAndUpdate(id, body, {
+      new: true,
+      runValidators: true,
+      session,
+    });
+
+    if (!category) {
+      throw new NotFound("Category not found");
+    }
+
+    return new ResponseModel(category, "Category updated successfully", 200);
+  }
+
+  /* ================= DELETE ================= */
+  async delete(id, { session }) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequest("Invalid category ID");
+    }
+
+    const category = await Category.findById(id).session(session);
+
+    if (!category) {
+      throw new NotFound("Category not found");
+    }
+
+    if (category.questionIds?.length) {
+      await Question.deleteMany(
+        { _id: { $in: category.questionIds } },
+        { session }
+      );
+    }
+
+    await Category.deleteOne({ _id: id }, { session });
+
+    return new ResponseModel(
+      null,
+      "Category and associated questions deleted successfully",
+      200
+    );
   }
 }
 

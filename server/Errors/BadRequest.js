@@ -5,7 +5,7 @@ class BadRequest extends custom_error_handler{
     constructor(message){
         super(message)
         this.messaeg = message
-        this.statusCodes = StatusCodes.BAD_REQUEST
+        this.status = StatusCodes.BAD_REQUEST
     }
 }
 
