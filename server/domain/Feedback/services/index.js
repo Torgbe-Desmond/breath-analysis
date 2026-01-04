@@ -2,6 +2,7 @@ const Feedback = require("../model/Feedback");
 const BadRequest = require("../../../Errors/BadRequest");
 const NotFound = require("../../../Errors/Notfound");
 
+
 class ResponseModel {
   constructor(data, message, status) {
     this.data = data;

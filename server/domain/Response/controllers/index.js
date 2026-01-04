@@ -3,6 +3,8 @@ const ResponseService = require("../service/service");
 const router = express.Router();
 const responseService = new ResponseService();
 const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs/promises");
 
 // CREATE response
 const createResponse = async (req, res, nest) => {
@@ -12,7 +14,7 @@ const createResponse = async (req, res, nest) => {
     const { answers, email } = req.body;
     const results = await responseService.create(answers, email, { session });
     await session.commitTransaction();
-    res.status(201).json(results);
+    res.status(201).json([]);
   } catch (error) {
     next(error);
   } finally {
@@ -109,6 +111,16 @@ const getResponseByEmail = async (req, res, next) => {
   }
 };
 
+const downloadResponseJson = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const results = await responseService.generateJsonOfResponse(id);
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createResponse,
   getAllResponse,
@@ -118,4 +130,5 @@ module.exports = {
   searchResponsesByValue,
   getResponseById,
   getResponseByEmail,
+  downloadResponseJson,
 };

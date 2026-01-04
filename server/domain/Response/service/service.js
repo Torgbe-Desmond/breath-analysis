@@ -4,6 +4,8 @@ const Question = require("../../Questions/model/Question");
 const computeCategoryInsights = require("../../../jobs/computeCategoryInsights");
 const NotFound = require("../../../Errors/Notfound");
 const BadRequest = require("../../../Errors/BadRequest");
+const path = require("path");
+const fs = require("fs/promises");
 
 class ResponseModel {
   constructor(data, message, status) {
@@ -185,6 +187,18 @@ class ResponseService {
       "Response retrieved successfully",
       200
     );
+  }
+
+  /* ================= GET ALL ================= */
+  async generateJsonOfResponse(id) {
+    const responseData = await this.getById(id);
+    const response = responseData.data.map((r) => {
+      return {
+        value: r.value,
+        questionText: r.questionText,
+      };
+    });
+    return new ResponseModel(response, "Response retried successfully", 200);
   }
 }
 

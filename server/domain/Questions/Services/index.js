@@ -154,77 +154,73 @@ class QuestionService {
   }
 
   // GET category insights
-  async getCategoryInsights(categoryId, page = 1, limit = 3) {
-    const skip = (page - 1) * limit;
-
+  async getCategoryInsights(categoryId) {
     const category = await Category.findById(categoryId).lean();
-    if (!category) return new NotFound(null, "Category not found", 404);
+    if (!category) throw new NotFound(null, "Category not found", 404);
 
-    const totalQuestions = await Question.countDocuments({ categoryId });
-
-    const questions = await Question.find({ categoryId })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const questions = await Question.find({ categoryId }).lean();
+    const totalQuestions = questions.length;
 
     const questionIds = questions.map((q) => q._id);
 
-    const responses = await Response.find({
-      "answers.questionId": { $in: questionIds },
-    }).lean();
+    // 🔹 Fetch only needed fields
+    const responses = await Response.find(
+      { "answers.questionId": { $in: questionIds } },
+      { answers: 1 }
+    ).lean();
 
-    questions.forEach((q) => {
-      const relevantAnswers = [];
-      responses.forEach((r) => {
-        r.answers.forEach((a) => {
-          if (a.questionId.toString() === q._id.toString()) {
-            relevantAnswers.push(a.value);
-          }
-        });
+    // 🔹 Build answer lookup map
+    const answerMap = new Map();
+
+    responses.forEach((r) => {
+      r.answers.forEach((a) => {
+        const key = a.questionId.toString();
+        if (!answerMap.has(key)) {
+          answerMap.set(key, []);
+        }
+        answerMap.get(key).push(a.value);
       });
+    });
 
-      q.totalResponses = relevantAnswers.length;
+    // 🔹 Attach insights per question
+    questions.forEach((q) => {
+      const answers = answerMap.get(q._id.toString()) || [];
+
+      q.totalResponses = answers.length;
 
       if (q.type === "checkbox") {
         const counts = {};
         q.options.forEach((opt) => (counts[opt] = 0));
-        relevantAnswers.forEach((ansArray) => {
-          if (Array.isArray(ansArray)) {
-            ansArray.forEach((opt) => {
+
+        answers.forEach((arr) => {
+          if (Array.isArray(arr)) {
+            arr.forEach((opt) => {
               if (counts[opt] !== undefined) counts[opt]++;
             });
           }
         });
+
         q.answers = counts;
       } else if (q.type === "radio" || q.type === "dropdown") {
         const counts = {};
         q.options.forEach((opt) => (counts[opt] = 0));
-        relevantAnswers.forEach((opt) => {
+
+        answers.forEach((opt) => {
           if (counts[opt] !== undefined) counts[opt]++;
         });
+
         q.answers = counts;
       } else {
-        q.answers = relevantAnswers;
+        q.answers = answers;
       }
     });
 
-    const totalPages = Math.ceil(totalQuestions / limit);
-    const hasMore = page < totalPages;
-
-    return new ResponseModel(
-      {
-        categoryId,
-        category,
-        page,
-        limit,
-        totalQuestions,
-        totalPages,
-        hasMore,
-        questions,
-      },
-      "Category insights fetched",
-      200
-    );
+    return {
+      categoryId,
+      category,
+      questions,
+      totalQuestions,
+    };
   }
 }
 

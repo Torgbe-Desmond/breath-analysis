@@ -1,5 +1,4 @@
 const express = require("express");
-const ResponseService = require("../service/service");
 const router = express.Router();
 const {
   createResponse,
@@ -10,6 +9,7 @@ const {
   searchResponsesByValue,
   getResponseById,
   getResponseByEmail,
+  downloadResponseJson,
 } = require("../controllers/index");
 
 // CREATE response
@@ -33,5 +33,8 @@ router.post("/search", searchResponsesByValue);
 router.get("/search/:id", getResponseById);
 
 router.post("/email", getResponseByEmail);
+
+ // Download response 
+router.get("/download/:id", downloadResponseJson);
 
 module.exports = router;

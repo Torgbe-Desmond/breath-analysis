@@ -1,10 +1,9 @@
 require("dotenv").config();
 
 const express = require("express");
-const expressLayout = require("express-ejs-layouts");
-const methodOverride = require("method-override");
 const connectDB = require("./server/config/db");
 const cors = require("cors");
+const { connectRedis } = require("./server/config/redis");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +14,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      "http://localhost:3001",
+      "http://localhost:3002",
       "https://breath-analysis-frontend.vercel.app",
     ],
     credentials: true,
@@ -28,7 +27,6 @@ app.use("/questions", require("./server/domain/Questions/routes/index"));
 app.use("/responses", require("./server/domain/Response/routes/index"));
 app.use("/feedbacks", require("./server/domain/Feedback/routes/index"));
 
-
 app.use(require("./server/middleware/errorMiddleware"));
 app.use(require("./server/middleware/notFound"));
 // Server
@@ -36,11 +34,16 @@ app.use(require("./server/middleware/notFound"));
 const start = async () => {
   try {
     await connectDB(process.env.MONGO_URI);
+
+    // Connect Redis once
+    await connectRedis();
+
     app.listen(PORT, () =>
       console.log(`Server is listening on port ${PORT}...`)
     );
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    process.exit(1);
   }
 };
 
