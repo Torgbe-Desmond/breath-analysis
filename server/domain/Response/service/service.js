@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Response = require("../model/Response");
 const Question = require("../../Questions/model/Question");
-const computeCategoryInsights = require("../../../jobs/computeCategoryInsights");
 const NotFound = require("../../../Errors/Notfound");
 const BadRequest = require("../../../Errors/BadRequest");
 const path = require("path");
@@ -32,15 +31,6 @@ class ResponseService {
     if (!Array.isArray(answers) || answers.length === 0) {
       throw new BadRequest("Invalid payload");
     }
-
-    const categoryIds = [
-      ...new Set(answers.map((a) => a.categoryId.toString())),
-    ];
-
-    // Background jobs (non-blocking)
-    categoryIds.forEach((categoryId) => {
-      setImmediate(() => computeCategoryInsights(categoryId));
-    });
 
     const response = await Response.create([{ answers, email }], { session });
 
