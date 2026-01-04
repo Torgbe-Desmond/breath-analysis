@@ -8,7 +8,7 @@ const createFeedback = async (req, res, next) => {
   try {
     const results = await _feedbackService.create(req.body, { session });
     await session.commitTransaction();
-    res.status(201).json([]);
+    res.status(201).json(results);
   } catch (error) {
     await session.abortTransaction();
     next(error);
