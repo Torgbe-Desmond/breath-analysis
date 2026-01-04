@@ -14,7 +14,7 @@ const createResponse = async (req, res, nest) => {
     const { answers, email } = req.body;
     const results = await responseService.create(answers, email, { session });
     await session.commitTransaction();
-    res.status(201).json([]);
+    res.status(201).json(results);
   } catch (error) {
     next(error);
   } finally {
