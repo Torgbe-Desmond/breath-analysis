@@ -39,6 +39,12 @@ const createQuestion = async (req, res, next) => {
       if (exists) pipeline.del(cacheKey);
     }
 
+    const questionsExists = await redisClient.exists("questions");
+
+    if (questionsExists) {
+      if (exists) pipeline.del(questionsExists);
+    }
+
     await pipeline.exec();
 
     res.status(results.status || 201).json(results);

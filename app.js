@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      "http://localhost:3002",
+      "http://localhost:3001",
       "https://breath-analysis-frontend.vercel.app",
     ],
     credentials: true,
@@ -43,7 +43,6 @@ const start = async () => {
     );
   } catch (error) {
     console.error(error);
-    process.exit(1);
   }
 };
 
