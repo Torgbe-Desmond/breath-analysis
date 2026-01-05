@@ -122,33 +122,43 @@ class ResponseService {
   }
 
   /* ================= SEARCH BY VALUE ================= */
-  async byValue(value, page, limit, skip) {
-    if (!value) {
-      throw new BadRequest("Please provide a value to filter");
-    }
-
-    const matchQuery = { "answers.value": value };
-
-    const total = await Response.countDocuments(matchQuery);
-
-    const results = await Response.find(matchQuery)
-      .select("_id")
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    return new ResponseModel(
-      {
-        page,
-        limit,
-        total,
-        hasMore: skip + results.length < total,
-        results,
-      },
-      "Responses filtered successfully",
-      200
-    );
+  async byValue(value, categoryId, page, limit, skip) {
+  if (!value) {
+    throw new BadRequest("Please provide a value to filter");
   }
+
+  const matchQuery = {
+    answers: {
+      $elemMatch: {
+        categoryId: new mongoose.Types.ObjectId(categoryId),
+        ...(Array.isArray(value)
+          ? { value: { $in: value } }
+          : { value }),
+      },
+    },
+  };
+
+  const total = await Response.countDocuments(matchQuery);
+
+  const results = await Response.find(matchQuery)
+    .select("_id")
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  return new ResponseModel(
+    {
+      page,
+      limit,
+      total,
+      hasMore: skip + results.length < total,
+      results,
+    },
+    "Responses filtered successfully",
+    200
+  );
+}
+
 
   /* ================= GET BY EMAIL ================= */
   async byEmail(email) {

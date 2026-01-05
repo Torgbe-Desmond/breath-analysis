@@ -80,14 +80,21 @@ const deleteResponse = async (req, res, next) => {
 
 const searchResponsesByValue = async (req, res, next) => {
   try {
-    const { value } = req.body;
+    const { value, categoryId } = req.body;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
-    const results = await responseService.byValue(value, page, limit, skip);
+    const results = await responseService.byValue(
+      value,
+      categoryId,
+      page,
+      limit,
+      skip
+    );
     res.status(results.status).json(results);
   } catch (error) {
+    console.log(error)
     next(error);
   }
 };
