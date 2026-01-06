@@ -122,43 +122,41 @@ class ResponseService {
   }
 
   /* ================= SEARCH BY VALUE ================= */
-  async byValue(value, categoryId, page, limit, skip) {
-  if (!value) {
-    throw new BadRequest("Please provide a value to filter");
-  }
+  async byValue(value, categoryId, questionId, page, limit, skip) {
+    if (!value) {
+      throw new BadRequest("Please provide a value to filter");
+    }
 
-  const matchQuery = {
-    answers: {
-      $elemMatch: {
-        categoryId: new mongoose.Types.ObjectId(categoryId),
-        ...(Array.isArray(value)
-          ? { value: { $in: value } }
-          : { value }),
+    const matchQuery = {
+      answers: {
+        $elemMatch: {
+          questionId: new mongoose.Types.ObjectId(questionId),
+          categoryId: new mongoose.Types.ObjectId(categoryId),
+          ...(Array.isArray(value) ? { value: { $in: value } } : { value }),
+        },
       },
-    },
-  };
+    };
 
-  const total = await Response.countDocuments(matchQuery);
+    const total = await Response.countDocuments(matchQuery);
 
-  const results = await Response.find(matchQuery)
-    .select("_id")
-    .skip(skip)
-    .limit(limit)
-    .lean();
+    const results = await Response.find(matchQuery)
+      .select("_id")
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-  return new ResponseModel(
-    {
-      page,
-      limit,
-      total,
-      hasMore: skip + results.length < total,
-      results,
-    },
-    "Responses filtered successfully",
-    200
-  );
-}
-
+    return new ResponseModel(
+      {
+        page,
+        limit,
+        total,
+        hasMore: skip + results.length < total,
+        results,
+      },
+      "Responses filtered successfully",
+      200
+    );
+  }
 
   /* ================= GET BY EMAIL ================= */
   async byEmail(email) {
