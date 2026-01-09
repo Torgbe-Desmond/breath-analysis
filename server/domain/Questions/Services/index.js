@@ -45,9 +45,19 @@ class QuestionService {
   }
 
   // READ all questions
-  async getAll() {
-    const questions = await Question.find();
-    return new ResponseModel(questions, "Questions fetched successfully", 200);
+  async getAll(page = 1, limit = 10, skip) {
+    const totalQuestions = await Question.countDocuments();
+
+    const questions = await Question.find().skip(skip).limit(limit).lean();
+
+    const totalPages = Math.ceil(totalQuestions / limit);
+    const hasMore = page < totalPages;
+
+    return new ResponseModel(
+      { questions, totalPages, hasMore, totalQuestions, page, limit },
+      "Questions fetched successfully",
+      200
+    );
   }
 
   async getAllDashboard(page = 1, limit = 10, skip) {
@@ -154,103 +164,102 @@ class QuestionService {
   }
 
   // GET category insights
- async getCategoryInsights(categoryId) {
-  const category = await Category.findById(categoryId).lean();
-  if (!category) throw new NotFound(null, "Category not found", 404);
+  async getCategoryInsights(categoryId) {
+    const category = await Category.findById(categoryId).lean();
+    if (!category) throw new NotFound(null, "Category not found", 404);
 
-  // 1️⃣ Fetch questions for this category
-  const questions = await Question.find({ categoryId }).lean();
-  const totalQuestions = questions.length;
+    // 1️⃣ Fetch questions for this category
+    const questions = await Question.find({ categoryId }).lean();
+    const totalQuestions = questions.length;
 
-  const questionIds = questions.map(q => q._id);
+    const questionIds = questions.map((q) => q._id);
 
-  // 2️⃣ Fetch ONLY answers that belong to these questions
-  const responses = await Response.find(
-    {
-      "answers.questionId": { $in: questionIds },
-    },
-    {
-      answers: 1,
-    }
-  ).lean();
+    // 2️⃣ Fetch ONLY answers that belong to these questions
+    const responses = await Response.find(
+      {
+        "answers.questionId": { $in: questionIds },
+      },
+      {
+        answers: 1,
+      }
+    ).lean();
 
-  // 3️⃣ Build answer map strictly by questionId
-  // key = questionId
-  // value = array of submitted answers
-  const answerMap = new Map();
+    // 3️⃣ Build answer map strictly by questionId
+    // key = questionId
+    // value = array of submitted answers
+    const answerMap = new Map();
 
-  responses.forEach(response => {
-    response.answers.forEach(answer => {
-      const qId = answer.questionId.toString();
+    responses.forEach((response) => {
+      response.answers.forEach((answer) => {
+        const qId = answer.questionId.toString();
 
-      // 🔒 Hard guard: ignore answers not in this category’s questions
-      if (!questionIds.some(id => id.toString() === qId)) return;
+        // 🔒 Hard guard: ignore answers not in this category’s questions
+        if (!questionIds.some((id) => id.toString() === qId)) return;
 
-      if (!answerMap.has(qId)) {
-        answerMap.set(qId, []);
+        if (!answerMap.has(qId)) {
+          answerMap.set(qId, []);
+        }
+
+        answerMap.get(qId).push(answer.value);
+      });
+    });
+
+    // 4️⃣ Attach insights PER QUESTION (no collisions possible)
+    const enrichedQuestions = questions.map((q) => {
+      const answers = answerMap.get(q._id.toString()) || [];
+
+      const base = {
+        _id: q._id,
+        label: q.label,
+        type: q.type,
+        options: q.options,
+        totalResponses: answers.length,
+      };
+
+      // 🔹 Checkbox (array answers)
+      if (q.type === "checkbox") {
+        const counts = {};
+        q.options.forEach((opt) => (counts[opt] = 0));
+
+        answers.forEach((arr) => {
+          if (Array.isArray(arr)) {
+            arr.forEach((opt) => {
+              if (counts[opt] !== undefined) {
+                counts[opt]++;
+              }
+            });
+          }
+        });
+
+        return { ...base, answers: counts };
       }
 
-      answerMap.get(qId).push(answer.value);
+      // 🔹 Radio / Dropdown (single value)
+      if (q.type === "radio" || q.type === "dropdown") {
+        const counts = {};
+        q.options.forEach((opt) => (counts[opt] = 0));
+
+        answers.forEach((opt) => {
+          if (counts[opt] !== undefined) {
+            counts[opt]++;
+          }
+        });
+
+        return { ...base, answers: counts };
+      }
+
+      // 🔹 Text / Textarea
+      return { ...base, answers };
     });
-  });
 
-  // 4️⃣ Attach insights PER QUESTION (no collisions possible)
-  const enrichedQuestions = questions.map(q => {
-    const answers = answerMap.get(q._id.toString()) || [];
-
-    const base = {
-      _id: q._id,
-      label: q.label,
-      type: q.type,
-      options: q.options,
-      totalResponses: answers.length,
+    // 5️⃣ Final response
+    return {
+      categoryId,
+      category,
+      totalQuestions,
+      questions: enrichedQuestions,
     };
-
-    // 🔹 Checkbox (array answers)
-    if (q.type === "checkbox") {
-      const counts = {};
-      q.options.forEach(opt => (counts[opt] = 0));
-
-      answers.forEach(arr => {
-        if (Array.isArray(arr)) {
-          arr.forEach(opt => {
-            if (counts[opt] !== undefined) {
-              counts[opt]++;
-            }
-          });
-        }
-      });
-
-      return { ...base, answers: counts };
-    }
-
-    // 🔹 Radio / Dropdown (single value)
-    if (q.type === "radio" || q.type === "dropdown") {
-      const counts = {};
-      q.options.forEach(opt => (counts[opt] = 0));
-
-      answers.forEach(opt => {
-        if (counts[opt] !== undefined) {
-          counts[opt]++;
-        }
-      });
-
-      return { ...base, answers: counts };
-    }
-
-    // 🔹 Text / Textarea
-    return { ...base, answers };
-  });
-
-  // 5️⃣ Final response
-  return {
-    categoryId,
-    category,
-    totalQuestions,
-    questions: enrichedQuestions,
-  };
-}
-
+  }
 }
 
 module.exports = QuestionService;

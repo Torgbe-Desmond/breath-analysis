@@ -47,10 +47,15 @@ const updateResponse = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { answers } = req.body;
-    const results = await responseService.update(req.params.id, answers, {
-      session,
-    });
+    const { answers, email } = req.body;
+    const results = await responseService.update(
+      req.params.id,
+      answers,
+      email,
+      {
+        session,
+      }
+    );
 
     await session.commitTransaction();
     res.status(results.status).json(results);

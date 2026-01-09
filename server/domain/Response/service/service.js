@@ -75,14 +75,52 @@ class ResponseService {
 
   /* ================= UPDATE ================= */
   async update(id, answers, email, { session }) {
+    // Validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequest("Invalid response ID");
     }
 
+    // Validate answers array
     if (!Array.isArray(answers) || answers.length === 0) {
       throw new BadRequest("No answers provided");
     }
 
+    // Find existing response by email
+    const existingResponse = await Response.findOne({ email }).session(session);
+
+    if (existingResponse) {
+      // Merge new answers into existing ones
+      const map = new Map();
+
+      // Add existing answers to map
+      existingResponse.answers.forEach((a) => {
+        map.set(a.questionId.toString(), a);
+      });
+
+      // Add/overwrite new answers
+      answers.forEach((a) => {
+        map.set(a.questionId.toString(), a);
+      });
+
+      // Preserve original submission order for the new answers
+      const mergedAnswers = Array.from(map.values());
+
+      existingResponse.answers = mergedAnswers;
+
+      // Save transactionally
+      await existingResponse.save({ session });
+
+      const responseSubmittedLength = existingResponse.answers.length;
+      console.log("responseSubmittedLength", responseSubmittedLength);
+
+      return new ResponseModel(
+        existingResponse,
+        "Response updated successfully",
+        200
+      );
+    }
+
+    // If no existing response, fallback to update by ID
     const updatedResponse = await Response.findByIdAndUpdate(
       id,
       { answers, email },
@@ -177,6 +215,7 @@ class ResponseService {
         questionId: a.questionId,
         value: a.value,
       })),
+      totalResponses: response.answers.length,
       submittedAt: response.createdAt,
     };
 
