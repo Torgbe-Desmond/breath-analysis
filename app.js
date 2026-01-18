@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use(
   cors({
+    // origin:"*",
     origin: [
       "http://localhost:3001",
       "https://breath-analysis-frontend.vercel.app",
@@ -26,6 +27,7 @@ app.use("/categories", require("./server/domain/Categories/routes/index"));
 app.use("/questions", require("./server/domain/Questions/routes/index"));
 app.use("/responses", require("./server/domain/Response/routes/index"));
 app.use("/feedbacks", require("./server/domain/Feedback/routes/index"));
+app.use("/posts", require("./server/domain/Posts/routes/index"));
 
 app.use(require("./server/middleware/errorMiddleware"));
 app.use(require("./server/middleware/notFound"));
