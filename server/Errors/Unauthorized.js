@@ -1,13 +1,12 @@
-const custom_error_handler = require('./custom-error-handler')
-const {StatusCodes} = require('http-status-codes')
+const CustomError = require("./custom-error-handler");
+const { StatusCodes } = require("http-status-codes");
 
-class Unauthorized extends custom_error_handler{
-    constructor(message){
-        super(message)
-        this.messaeg = message
-        this.status = StatusCodes.UNAUTHORIZED
-    }
+class Unauthorized extends CustomError {
+  constructor(message) {
+    super(message, StatusCodes.UNAUTHORIZED);
+    this.message = message;
+    this.status = StatusCodes.UNAUTHORIZED;
+  }
 }
 
-
-module.exports = Unauthorized
+module.exports = Unauthorized;

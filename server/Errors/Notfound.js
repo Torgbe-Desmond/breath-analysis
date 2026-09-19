@@ -1,12 +1,12 @@
-const custom_error_handler = require("./custom-error-handler");
+const CustomError = require("./custom-error-handler");
 const { StatusCodes } = require("http-status-codes");
 
-class NotFound extends custom_error_handler {
+class Notfound extends CustomError {
   constructor(message) {
-    super(message);
-    this.messaeg = message;
+    super(message, StatusCodes.NOT_FOUND);
+    this.message = message;
     this.status = StatusCodes.NOT_FOUND;
   }
 }
 
-module.exports = NotFound;
+module.exports = Notfound;

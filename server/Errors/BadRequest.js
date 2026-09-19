@@ -1,13 +1,12 @@
-const custom_error_handler = require('./custom-error-handler')
-const {StatusCodes} = require('http-status-codes')
+const CustomError = require("./custom-error-handler");
+const { StatusCodes } = require("http-status-codes");
 
-class BadRequest extends custom_error_handler{
-    constructor(message){
-        super(message)
-        this.messaeg = message
-        this.status = StatusCodes.BAD_REQUEST
-    }
+class BadRequest extends CustomError {
+  constructor(message) {
+    super(message, StatusCodes.BAD_REQUEST);
+    this.message = message;
+    this.status = StatusCodes.BAD_REQUEST;
+  }
 }
 
-
-module.exports = BadRequest
+module.exports = BadRequest;

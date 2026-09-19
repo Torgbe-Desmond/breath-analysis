@@ -1,9 +1,9 @@
-class custom_error_handler extends Error{
-    constructor(message){
-        super(message)
-        this.message = message
-    }
+class CustomError extends Error {
+  constructor(message, status = 500) {
+    super(message);
+    this.message = message;
+    this.status = status;
+  }
 }
 
-
-module.exports = custom_error_handler
+module.exports = CustomError;
