@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Question = require("../models/question.model");
 const Category = require("../models/category.model");
-const { NotFound, BadRequest } = require("../errors");
+const { NotFound, BadRequest } = require("../errors/index");
 
 class ResponseModel {
   constructor(data, message, status) {
@@ -27,7 +27,6 @@ class CategoryService {
 
       return new ResponseModel(result, "Categories seeded successfully", 201);
     } catch (err) {
-      // Duplicate key error
       if (err.code === 11000) {
         throw new BadRequest("Some categories already exist");
       }
