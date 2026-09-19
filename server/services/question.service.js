@@ -1,9 +1,7 @@
-const mongoose = require("mongoose");
 const Response = require("../models/response.model");
 const Question = require("../models/question.model");
 const Category = require("../models/category.model");
-const Insights = require("../models/insight.model");
-const { NotFound, BadRequest } = require("../errors");
+const { NotFound, BadRequest } = require("../errors/index.js");
 
 class ResponseModel {
   constructor(data, message, status) {

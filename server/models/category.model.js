@@ -15,7 +15,7 @@ const categorySchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Category = mongoose.model("Category", categorySchema);

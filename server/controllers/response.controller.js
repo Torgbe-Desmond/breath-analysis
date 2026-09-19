@@ -1,4 +1,3 @@
-const express = require("express");
 const ResponseService = require("../services/response.service");
 const responseService = new ResponseService();
 const mongoose = require("mongoose");

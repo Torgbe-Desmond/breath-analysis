@@ -6,7 +6,6 @@ const { redisClient } = require("../config/redis");
 const DEFAULT_EXPIRATION = 3600;
 const MAX_CACHED_CATEGORIES = 5;
 
-const router = express.Router();
 const questionService = new QuestionService();
 
 class ResponseModel {
