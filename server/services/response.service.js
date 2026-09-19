@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 const Response = require("../models/response.model");
 const Question = require("../models/question.model");
 const { NotFound, BadRequest } = require("../errors/index");
-const path = require("path");
-const fs = require("fs/promises");
 
 class ResponseModel {
   constructor(data, message, status) {
