@@ -1,11 +1,11 @@
-const Question = require("../domain/Questions/model/Question");
-const Response = require("../domain/Response/model/Response");
-const Insight = require("../domain/Insights/model/Insights");
+const Question = require("../models/question.model");
+const Response = require("../models/response.model");
+const Insight = require("../models/insight.model");
 
 async function computeCategoryInsights(categoryId) {
   // 1. Load questions
   const questions = await Question.find({ categoryId }).lean();
-  const questionIds = questions.map(q => q._id);
+  const questionIds = questions.map((q) => q._id);
 
   // 2. Load responses
   const responses = await Response.find({
@@ -13,11 +13,11 @@ async function computeCategoryInsights(categoryId) {
   }).lean();
 
   // 3. Compute insights
-  const computedQuestions = questions.map(q => {
+  const computedQuestions = questions.map((q) => {
     const relevantAnswers = [];
 
-    responses.forEach(r => {
-      r.answers.forEach(a => {
+    responses.forEach((r) => {
+      r.answers.forEach((a) => {
         if (a.questionId.toString() === q._id.toString()) {
           relevantAnswers.push(a.value);
         }
@@ -28,25 +28,23 @@ async function computeCategoryInsights(categoryId) {
 
     if (q.type === "checkbox") {
       answers = {};
-      q.options.forEach(opt => (answers[opt] = 0));
+      q.options.forEach((opt) => (answers[opt] = 0));
 
-      relevantAnswers.forEach(arr => {
+      relevantAnswers.forEach((arr) => {
         if (Array.isArray(arr)) {
-          arr.forEach(opt => {
+          arr.forEach((opt) => {
             if (answers[opt] !== undefined) answers[opt]++;
           });
         }
       });
-    } 
-    else if (q.type === "radio" || q.type === "dropdown") {
+    } else if (q.type === "radio" || q.type === "dropdown") {
       answers = {};
-      q.options.forEach(opt => (answers[opt] = 0));
+      q.options.forEach((opt) => (answers[opt] = 0));
 
-      relevantAnswers.forEach(opt => {
+      relevantAnswers.forEach((opt) => {
         if (answers[opt] !== undefined) answers[opt]++;
       });
-    } 
-    else {
+    } else {
       answers = relevantAnswers;
     }
 
@@ -67,7 +65,7 @@ async function computeCategoryInsights(categoryId) {
       questions: computedQuestions,
       computedAt: new Date(),
     },
-    { upsert: true, new: true }
+    { upsert: true, new: true },
   );
 }
 
