@@ -41,17 +41,35 @@ class QuestionService {
     );
   }
 
-  // READ all questions
-  async getAll(page = 1, limit = 10, skip) {
-    const totalQuestions = await Question.countDocuments();
+  async getAll(page = 1, limit = 10, skip, categoryId = null) {
+    const filter = {};
+    if (categoryId) {
+      if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        throw new BadRequest("Invalid category ID");
+      }
+      filter.categoryId = categoryId;
+    }
 
-    const questions = await Question.find().skip(skip).limit(limit).lean();
+    const totalQuestions = await Question.countDocuments(filter);
+    const questions = await Question.find(filter)
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    const totalPages = Math.ceil(totalQuestions / limit);
+    const totalPages = Math.ceil(totalQuestions / limit) || 1;
     const hasMore = page < totalPages;
 
     return new ResponseModel(
-      { questions, totalPages, hasMore, totalQuestions, page, limit },
+      {
+        questions,
+        totalPages,
+        hasMore,
+        totalQuestions,
+        page,
+        limit,
+        categoryId: categoryId || null,
+      },
       "Questions fetched successfully",
       200,
     );

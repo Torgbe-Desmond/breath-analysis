@@ -66,15 +66,25 @@ class CategoryService {
 
   /* ================= GET ALL ================= */
   async getAll() {
-    const categories = await Category.find();
+    const categories = await Category.find().lean();
+
+    const withCounts = await Promise.all(
+      categories.map(async (cat) => {
+        const fromIds = Array.isArray(cat.questionIds)
+          ? cat.questionIds.length
+          : 0;
+        const fromDb = await Question.countDocuments({ categoryId: cat._id });
+        const questionCount = Math.max(fromIds, fromDb);
+        return { ...cat, questionCount };
+      }),
+    );
 
     return new ResponseModel(
-      categories,
+      withCounts,
       "Categories fetched successfully",
       200,
     );
   }
-
   /* ================= GET BY ID ================= */
   async getById(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
