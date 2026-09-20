@@ -1,7 +1,8 @@
+const mongoose = require("mongoose");
 const Response = require("../models/response.model");
 const Question = require("../models/question.model");
 const Category = require("../models/category.model");
-const { NotFound, BadRequest } = require("../Errors/index");
+const { NotFound, BadRequest } = require("../errors/index");
 
 class ResponseModel {
   constructor(data, message, status) {
@@ -102,6 +103,33 @@ class QuestionService {
   }
 
   // UPDATE question
+  async update(id, data, { session }) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequest("Invalid question ID");
+    }
+
+    const question = await Question.findById(id).session(session);
+    if (!question) {
+      throw new NotFound("Question not found");
+    }
+
+    const allowed = ["label", "type", "options", "categoryId"];
+    for (const key of allowed) {
+      if (data[key] !== undefined) {
+        question[key] = data[key];
+      }
+    }
+
+    await question.save({ session });
+
+    return new ResponseModel(
+      question,
+      "Question updated successfully",
+      200
+    );
+  }
+
+  // DELETE question
   async delete(id, { session }) {
     const question = await Question.findById(id).session(session);
 

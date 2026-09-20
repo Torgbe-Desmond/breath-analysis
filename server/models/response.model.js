@@ -28,6 +28,12 @@ const responseSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      trim: true,
+      lowercase: true,
+    },
+    lastIncompleteReminderAt: {
+      type: Date,
+      default: null,
     },
   },
   {

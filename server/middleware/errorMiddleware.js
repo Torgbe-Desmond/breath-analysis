@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { CustomError } = require("../Errors/index");
+const { CustomError } = require("../errors/index");
 
 const errorMiddleware = (err, req, res, next) => {
   const errorObj = {};

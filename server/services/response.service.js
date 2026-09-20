@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const Response = require("../models/response.model");
 const Question = require("../models/question.model");
-const { NotFound, BadRequest } = require("../Errors/index");
+const { NotFound, BadRequest } = require("../errors/index");
+const { getAnswerProgress } = require("../utils/answerStats");
 
 class ResponseModel {
   constructor(data, message, status) {
@@ -199,11 +200,16 @@ class ResponseService {
       throw new BadRequest("Email is required");
     }
 
-    const response = await Response.findOne({ email });
+    const response = await Response.findOne({
+      email: String(email).toLowerCase().trim(),
+    });
 
     if (!response) {
       throw new NotFound("Response not found");
     }
+
+    const totalQuestions = await Question.countDocuments();
+    const progress = getAnswerProgress(response.answers, totalQuestions);
 
     const formattedResponse = {
       _id: response._id,
@@ -213,6 +219,11 @@ class ResponseService {
         value: a.value,
       })),
       totalResponses: response.answers.length,
+      answeredCount: progress.answeredCount,
+      totalQuestions: progress.totalQuestions,
+      remaining: progress.remaining,
+      isComplete: progress.isComplete,
+      progressPercent: progress.progressPercent,
       submittedAt: response.createdAt,
     };
 
