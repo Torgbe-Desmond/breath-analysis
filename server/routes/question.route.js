@@ -3,6 +3,7 @@ const {
   createQuestion,
   getAllQuestions,
   getAllDashboardQuestions,
+  getQuestionsByCategory, // list for assessment
   getQuestion,
   updateQuestion,
   deleteQuestion,
@@ -11,23 +12,22 @@ const {
 
 const router = express.Router();
 
-/* ================= CREATE ================= */
+/* CREATE */
 router.post("/", createQuestion);
 
-/* ================= READ ================= */
-router.get("/", getAllQuestions);
+/* READ — static paths first */
+router.get("/", getAllQuestions); // supports ?categoryId=
 router.get("/dashboard", getAllDashboardQuestions);
 
-/* ✅ MUST COME BEFORE `/:id` */
-router.get("/:categoryId/insights", getInsight);
+/* Category-scoped (before /:id) */
+router.get("/category/:categoryId", getQuestionsByCategory); // assessment list
+router.get("/:categoryId/insights", getInsight); // explore insights
 
-/* ================= SINGLE ================= */
+/* SINGLE */
 router.get("/:id", getQuestion);
 
-/* ================= UPDATE ================= */
+/* UPDATE / DELETE */
 router.put("/:id", updateQuestion);
-
-/* ================= DELETE ================= */
 router.delete("/:id", deleteQuestion);
 
 module.exports = router;

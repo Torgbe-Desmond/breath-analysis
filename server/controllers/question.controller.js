@@ -6,6 +6,7 @@ const { redisClient } = require("../config/redis");
 const DEFAULT_EXPIRATION = 3600;
 const MAX_CACHED_CATEGORIES = 5;
 
+const router = express.Router();
 const questionService = new QuestionService();
 
 class ResponseModel {
@@ -58,7 +59,21 @@ const getAllQuestions = async (req, res, next) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const categoryId = req.query.categoryId || null;
+
+    const results = await questionService.getAll(page, limit, skip);
+
+    res.status(results.status).json(results);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getQuestionsByCategory = async (req, res, next) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const { categoryId } = req.params;
 
     const results = await questionService.getAll(page, limit, skip, categoryId);
     res.status(results.status).json(results);
@@ -272,4 +287,5 @@ module.exports = {
   updateQuestion,
   deleteQuestion,
   getInsight,
+  getQuestionsByCategory,
 };
