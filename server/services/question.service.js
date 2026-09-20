@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Response = require("../models/response.model");
 const Question = require("../models/question.model");
 const Category = require("../models/category.model");
-const { NotFound, BadRequest } = require("../errors/index");
+const { NotFound, BadRequest } = require("../Errors/index");
 
 class ResponseModel {
   constructor(data, message, status) {
@@ -122,11 +122,7 @@ class QuestionService {
 
     await question.save({ session });
 
-    return new ResponseModel(
-      question,
-      "Question updated successfully",
-      200
-    );
+    return new ResponseModel(question, "Question updated successfully", 200);
   }
 
   // DELETE question
