@@ -16,13 +16,12 @@ async function remindIncompleteAssessments() {
 
   const cooldownDays = Number(process.env.REMINDER_COOLDOWN_DAYS ?? 3);
   const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000;
-  const frontendUrl =
-    process.env.FRONTEND_URL || "https://breath-analysis-frontend.vercel.app";
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
   const dryRun = process.env.REMINDER_DRY_RUN === "true";
   const now = Date.now();
 
   const responses = await Response.find({
-    email: { $exists: true, $nin: [null, ""] },
+    email: "123torgbe@gmail.com",
   })
     .select("email answers lastIncompleteReminderAt")
     .lean();

@@ -20,7 +20,6 @@ class QuestionService {
   // CREATE multiple questions with transaction
   async create(questionsData, { session }) {
     const createdQuestions = [];
-
     for (const question of questionsData) {
       const newQuestion = await Question.create([question], { session });
       if (newQuestion) {

@@ -7,6 +7,9 @@ const connectDB = require("./server/config/db");
 const { connectRedis } = require("./server/config/redis");
 const notFound = require("./server/middleware/notFound");
 const errorMiddleware = require("./server/middleware/errorMiddleware");
+const {
+  remindIncompleteAssessments,
+} = require("./server/jobs/remindIncompleteAssessments");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -18,7 +21,7 @@ app.use(express.json());
 
 // Only needed when the frontend is on a different origin (Vite dev server, a separate Vercel site).
 // Example: CORS_ORIGINS=http://localhost:5173,https://your-app.vercel.app
-const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
@@ -67,7 +70,7 @@ const start = async () => {
 
     await connectDB(process.env.MONGO_URI);
     console.log("MongoDB connected");
-
+    // await remindIncompleteAssessments();
     try {
       await connectRedis();
     } catch (redisErr) {
